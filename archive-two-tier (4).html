@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predator Cues Archive — Two-Tier Tabs Prototype</title>
+<style>
+  :root{
+    --font-head:"Futura","Futura PT","Century Gothic","Open Sans",sans-serif;
+    --font-body:"Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --bg:#fff;--surface:#fff;--surface-2:#f4f4f4;--surface-3:#f9f9f9;
+    --line:#e0e0e0;--line-strong:#c9c9c9;
+    --ink:#0a0a0a;--ink-2:#2b2b2b;--muted:#595959;
+    --gold:#ffd400;--gold-tint:#fff7cc;--maxw:1240px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;line-height:1.5}
+  img{display:block;max-width:100%}
+
+  .hero{border-bottom:1px solid var(--line);padding:56px 24px 34px;text-align:center}
+  .hero .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#fff;font-weight:700;margin-bottom:20px;display:inline-block;background:var(--ink);padding:7px 14px;border-radius:3px}
+  .hero h1{font-family:var(--font-head);font-weight:700;font-size:clamp(36px,6.5vw,68px);line-height:1;text-transform:uppercase;color:var(--ink)}
+  .hero h1 em{font-style:normal;position:relative}
+  .hero h1 em::after{content:"";position:absolute;left:-2%;right:-2%;bottom:.06em;height:.2em;background:var(--gold);z-index:-1}
+  .hero p{max-width:600px;margin:18px auto 0;color:var(--ink-2);font-size:16px;line-height:1.7}
+
+  /* ---------- TIER 1: FAMILY ROW ---------- */
+  .tier1wrap{position:sticky;top:0;z-index:42;background:var(--ink)}
+  .tier1{max-width:var(--maxw);margin:0 auto;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding:0 8px}
+  .tier1::-webkit-scrollbar{display:none}
+  .fam{flex:0 0 auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.62);font-family:var(--font-head);font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:18px 22px 16px;border-bottom:3px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
+  .fam:hover{color:#fff}
+  .fam[aria-selected="true"]{color:#fff;border-bottom-color:var(--gold)}
+  .fam .fcount{margin-left:7px;font-family:var(--font-body);font-size:11px;color:var(--gold);font-weight:600}
+
+  /* ---------- TIER 2: SERIES ROW ---------- */
+  .tier2wrap{position:sticky;top:55px;z-index:41;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.04)}
+  .tier2{max-width:var(--maxw);margin:0 auto;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:12px 16px}
+  .tier2::-webkit-scrollbar{display:none}
+  .ser{flex:0 0 auto;background:var(--surface-2);border:1px solid var(--line);cursor:pointer;color:var(--ink-2);font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.04em;padding:8px 16px;border-radius:99px;transition:all .15s;white-space:nowrap}
+  .ser:hover{border-color:var(--ink);color:var(--ink)}
+  .ser[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  /* ---------- Panel ---------- */
+  .panel{max-width:var(--maxw);margin:0 auto;padding:34px 24px 80px;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+  .breadcrumb{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .breadcrumb b{color:var(--ink)}
+  .panel-intro h2{font-family:var(--font-head);font-weight:700;font-size:clamp(24px,3.6vw,38px);text-transform:uppercase;color:var(--ink)}
+  .panel-intro .yr{color:var(--ink);font-weight:400;background:var(--gold);padding:2px 10px;border-radius:3px;font-size:.62em;vertical-align:middle;margin-left:8px}
+  .panel-intro p{color:var(--ink-2);font-size:14px;max-width:440px}
+
+  /* ---------- Carousel ---------- */
+  .carousel{position:relative;margin-top:8px}
+  .carousel-track{display:flex;gap:20px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none;padding:4px 2px 14px}
+  .carousel-track::-webkit-scrollbar{display:none}
+  .cue{flex:0 0 auto;width:min(78%,820px);scroll-snap-align:center;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .cue-figure{background:var(--surface-3);border-bottom:1px solid var(--line);padding:36px 50px;display:flex;align-items:center;justify-content:center;min-height:220px}
+  .cue-figure img{width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.18))}
+  .cue-info{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding:22px 26px 24px}
+  .cue-info .model{font-family:var(--font-head);font-weight:700;font-size:24px;color:var(--ink);text-transform:uppercase}
+  .cue-info .specs{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-end}
+  .cue-info .spec b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:700}
+  .cue-info .spec span{font-size:15px;color:var(--ink);font-weight:600}
+  .retired-pill{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:var(--ink);padding:5px 11px;border-radius:99px;font-weight:700}
+  /* carousel controls */
+  .car-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:4px}
+  .car-arrows{display:flex;gap:8px}
+  .car-btn{width:44px;height:44px;border:1px solid var(--line-strong);background:#fff;border-radius:50%;cursor:pointer;display:grid;place-items:center;color:var(--ink);transition:background .15s,border-color .15s,opacity .15s}
+  .car-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .car-btn:disabled{opacity:.3;cursor:default}
+  .car-btn:disabled:hover{background:#fff;color:var(--ink);border-color:var(--line-strong)}
+  .car-btn svg{width:18px;height:18px}
+  .car-dots{display:flex;gap:7px}
+  .car-dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);border:none;padding:0;cursor:pointer;transition:background .15s,transform .15s}
+  .car-dot[aria-current="true"]{background:var(--ink);transform:scale(1.25)}
+  .car-counter{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+  @media(max-width:760px){
+    .cue{width:88%}
+    .cue-figure{padding:24px 22px;min-height:160px}
+    .cue-info{flex-direction:column;align-items:flex-start;gap:12px;padding:18px 18px 20px}
+    .panel{padding:24px 16px 60px}.hero{padding:42px 18px 28px}
+    .tier2wrap{top:53px}
+    .car-arrows{display:none}   /* swipe on touch */
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">30 Years of Cue-Making</div>
+  <h1>The Predator <em>Archive</em></h1>
+  <p>A living record of every retired and discontinued Predator cue. Choose a family, then a series &mdash; then carry the lineage forward with the cues we build today.</p>
+</header>
+
+<div class="tier1wrap"><div class="tier1" id="tier1" role="tablist" aria-label="Cue families"></div></div>
+<div class="tier2wrap"><div class="tier2" id="tier2" role="tablist" aria-label="Series within family"></div></div>
+<main id="panel" class="panel" role="tabpanel" aria-live="polite"></main>
+
+<script>
+/* ---------- DATA: family -> series -> cues ----------
+   In Liquid this becomes a loop over section blocks / a metaobject.
+   img paths are the real retired-cue assets from the current archive. */
+const CDN="https://predatorcues.com/cdn/shop/files/";
+const DATA=[
+  {fam:"Heritage", series:[
+    {id:"1996",name:"1996",year:"1996",blurb:"The cues that started it all \u2014 the original 314 lineage.",cues:[
+      {m:"Model 314-6",y:"1996",p:"$1,050",img:"retired-96_6.jpg?v=1764873453",alt:"Glossy brown wood pool cue with white diamond accents"},
+      {m:"Model 314-5",y:"1996",p:"$950",img:"retired-96_5.jpg?v=1764873453",alt:"Glossy brown wood pool cue with ivory detailing"},
+      {m:"Model 314-3",y:"1996",p:"$650",img:"retired-96_3.jpg?v=1764873453",alt:"Glossy brown wood retired pool cue"}]},
+    {id:"1998",name:"1998",year:"1998",blurb:"Refining the formula in the second wave of production cues.",cues:[
+      {m:"Model 98-6",y:"1998",p:"$955",img:"retired-98_6.jpg?v=1764873453",alt:"Wood pool cue with green and white accents"},
+      {m:"Model 98-5",y:"1998",p:"$825",img:"retired-98_5.jpg?v=1764873453",alt:"Brown wooden pool cue with white diamond accents"},
+      {m:"Model 98-1",y:"1998",p:"$420",img:"retired-98_1.jpg?v=1764873453",alt:"Dark brown wood retired pool cue"}]},
+    {id:"1999",name:"1999",year:"1999",blurb:"The closing chapter of the founding era.",cues:[
+      {m:"Model 99-6",y:"1999",p:"$995",img:"retired-99_4.jpg?v=1764873453",alt:"Pool cue with black and silver design"},
+      {m:"Model 99-5",y:"1999",p:"$845",img:"retired-99_6.jpg?v=1764873453",alt:"Two-toned wood pool cue with black wrap"},
+      {m:"Model 99-2",y:"1999",p:"$495",img:"retired-99_2.jpg?v=1764873453",alt:"Glossy wood retired pool cue with black wrap"}]}
+  ]},
+  {fam:"K-Series", series:[
+    {id:"2k",name:"2K",year:"2000",blurb:"The first numbered production line.",cues:[
+      {m:"Model 2K-6",y:"2000",p:"$1,050",img:"retired-2k_6.jpg?v=1764873453",alt:"Dark brown wood pool cue with white detailing"},
+      {m:"Model 2K-5",y:"2000",p:"$925",img:"retired-2k_5.jpg?v=1764873453",alt:"Two-tone wood pool cue with white diamond accents"},
+      {m:"Model 2K-2",y:"2000",p:"$545",img:"retired-2k_2.jpg?v=1764873453",alt:"Brown wood pool cue with textured wrap"}]},
+    {id:"3k",name:"3K",year:"2002",blurb:"Expanding the production catalogue.",cues:[
+      {m:"Model 3K-7",y:"2002",p:"$1,125",img:"retired-3k_7.jpg?v=1764873454",alt:"Pale wood pool cue with black and white detailing"},
+      {m:"Model 3K-6",y:"2002",p:"$945",img:"retired-3k_6.jpg?v=1764873453",alt:"Pool cue with red and black design"},
+      {m:"Model 3K-1",y:"2002",p:"$525",img:"retired-3k_1.jpg?v=1764873453",alt:"Black pool cue with textured black wrap"}]},
+    {id:"4k",name:"4K",year:"2004",blurb:"Mid-decade evolution of the core line.",cues:[
+      {m:"Model 4K-7",y:"2004",p:"$1,145",img:"retired-4k_7.jpg?v=1764873454",alt:"Pool cue with pale wood accents and textured black wrap"},
+      {m:"Model 4K-6",y:"2004",p:"$965",img:"retired-4k_6.jpg?v=1764873454",alt:"Dark brown glossy pool cue with white and turquoise"},
+      {m:"Model 4K-1",y:"2004",p:"$545",img:"retired-4k_1.jpg?v=1764873454",alt:"Glossy black pool cue with textured black wrap"}]},
+    {id:"5k",name:"5K",year:"2006",blurb:"The most expansive K-series run.",cues:[
+      {m:"Model 5K-8",y:"2006",p:"$1,244",img:"retired-5k_8.jpg?v=1764873454",alt:"Black pool cue with silver tip and intricate designs"},
+      {m:"Model 5K-5",y:"2006",p:"$924",img:"retired-5k_5.jpg?v=1764873454",alt:"Black and pale wood pool cue with intricate designs"},
+      {m:"Model 5K-1",y:"2006",p:"$554",img:"retired-5k_1.jpg?v=1764873454",alt:"Glossy black pool cue with textured wrap"}]},
+    {id:"8k",name:"8K",year:"2014",blurb:"The final entry in the K lineage.",cues:[
+      {m:"Model 8K-4",y:"2014",p:"$939",img:"Pred-8k-4-retired.jpg?v=1764873455",alt:"Brown wood pool cue with turquoise and ivory detailing"},
+      {m:"Model 8K-3",y:"2014",p:"$799",img:"Pred-8k-3-retired.jpg?v=1764873454",alt:"Dark brown pool cue with ivory detailing"},
+      {m:"Model 8K-1",y:"2014",p:"$639",img:"Pred-8k-1-retired.jpg?v=1764873454",alt:"Glossy dark brown pool cue with textured brown wrap"}]},
+    {id:"kclassics",name:"K Classics",year:"",blurb:"A retro tribute to the K-series era.",cues:[
+      {m:"K Series Classics 1-4",y:"\u2014",p:"$1,009",img:"retired-_PRED-LE-RETROK-CAT-R4-2000x200_copy.png?v=1764873457",alt:"Dark wood pool cue with green and ivory detailing"},
+      {m:"K Series Classics 1-2",y:"\u2014",p:"$919",img:"retired-_PRED-LE-RETROK-CAT-R2-2000x200_copy.png?v=1764873456",alt:"Glossy wood pool cue with black accents"},
+      {m:"K Series Classics 1-1",y:"\u2014",p:"$849",img:"retired-_PRED-LE-RETROK-CAT-R1-2000x200_copy.png?v=1764873456",alt:"Brown wood pool cue with green and black accents"}]}
+  ]},
+  {fam:"BLAK", series:[
+    {id:"blak",name:"BLAK",year:"2007",blurb:"The original all-black aesthetic.",cues:[
+      {m:"Model BLAK-4",y:"2007",p:"$1,499",img:"retired_blak4.jpg?v=1764873455",alt:"Black retired pool cue with intricate white detailing"},
+      {m:"Model BLAK-3",y:"2007",p:"$1,359",img:"retired_blak3.jpg?v=1764873455",alt:"Black retired pool cue with white diamond detailing"},
+      {m:"Model BLAK-1",y:"2007",p:"$1,099",img:"retired_blak1.jpg?v=1764873455",alt:"Black pool cue with intricate white detailing"}]},
+    {id:"blak2",name:"BLAK2",year:"2009",blurb:"The second generation of the blacked-out line.",cues:[
+      {m:"Model BLAK2-4",y:"2009",p:"$1,499",img:"blak2-4-retired.jpg?v=1764873455",alt:"Black retired pool cue with white detailing"},
+      {m:"Model BLAK2-3",y:"2009",p:"$1,399",img:"blak2-3-retired.jpg?v=1764873455",alt:"Black pool cue with silver ferrule"},
+      {m:"Model BLAK2-1",y:"2009",p:"$1,099",img:"blak2-1-retired.jpg?v=1764873455",alt:"Black pool cue with decorative elements"}]},
+    {id:"blak3",name:"BLAK3",year:"2015",blurb:"The third and most refined BLAK generation.",cues:[
+      {m:"Model BLAK3-5",y:"2015",p:"$1,559",img:"17-Pred-BLAK3-5-retired.jpg?v=1764873455",alt:"Black retired pool cue with white detailing"},
+      {m:"Model BLAK3-4",y:"2015",p:"$1,399",img:"17-Pred-BLAK3-4-retired.jpg?v=1764873455",alt:"Black pool cue with silver accents"},
+      {m:"Model BLAK3-1",y:"2015",p:"$1,059",img:"17-Pred-BLAK3-1-retired.jpg?v=1764873455",alt:"Black retired pool cue with intricate white detailing"}]}
+  ]},
+  {fam:"IKON", series:[
+    {id:"ikon",name:"IKON",year:"2008",blurb:"The original design-forward line, nine models deep.",cues:[
+      {m:"Model IKON-9",y:"2008",p:"$1,449",img:"retired-ikon-9.jpg?v=1764873455",alt:"Black pool cue with red and beige detailing"},
+      {m:"Model IKON-5",y:"2008",p:"$999",img:"retired-ikon-5.jpg?v=1764873455",alt:"Black and red pool cue with a white tip"},
+      {m:"Model IKON-1",y:"2008",p:"$599",img:"retired-ikon-1.jpg?v=1764873455",alt:"Glossy black pool cue with textured black wrap"}]},
+    {id:"ikon2",name:"IKON2",year:"2011",blurb:"The second IKON generation.",cues:[
+      {m:"Model IKON2-9",y:"2011",p:"$1,499",img:"retired-hor-ikon2-9.png?v=1764873456",alt:"Black pool cue with white and blue diamond accents"},
+      {m:"Model IKON2-6",y:"2011",p:"$1,099",img:"retired-hor-ikon2-6.png?v=1764873456",alt:"Black pool cue with red diamond accents"},
+      {m:"Model IKON2-1",y:"2011",p:"$649",img:"retired-hor-ikon2-1.png?v=1764873456",alt:"Black ikon pool cue with textured black wrap"}]},
+    {id:"ikon3",name:"IKON3",year:"2016",blurb:"The final IKON generation.",cues:[
+      {m:"Model IKON3-5",y:"2016",p:"$1,399",img:"Pred-ikon-3-5-retired.jpg?v=1764873456",alt:"Ivory and pale wood pool cue with intricate design"},
+      {m:"Model IKON3-4",y:"2016",p:"$1,269",img:"Pred-ikon-3-4-retired.jpg?v=1764873456",alt:"Red pool cue with pale wood detailing"},
+      {m:"Model IKON3-1",y:"2016",p:"$899",img:"Pred-ikon-3-1-retired.jpg?v=1764873456",alt:"Ivory and red pool cue"}]}
+  ]},
+  {fam:"P-Series", series:[
+    {id:"p2",name:"P2",year:"2000\u20132005",blurb:"The Predator 2 platform \u2014 metallics and curly maple.",cues:[
+      {m:"P2 Curly Maple Burgundy",y:"2005",p:"$1,054",img:"retired-p2-7.jpg?v=1764873458",alt:"Burgundy patterned wood pool cue butt"},
+      {m:"P2 Curly Maple",y:"2003",p:"$1,004",img:"retired-p2-5.jpg?v=1764873458",alt:"Pale wood pool cue butt"},
+      {m:"P2 Metallic Blue",y:"2004",p:"$704",img:"retired-p2-2.jpg?v=1764873457",alt:"Glossy deep blue pool cue butt"}]},
+    {id:"p3",name:"P3",year:"2009\u20132021",blurb:"The platform that carried Predator for a decade.",cues:[
+      {m:"P3 Cobalt Blue Racer",y:"2021",p:"$969",img:"retired-predator-p3-racer-cobalt-pool-cue-nw-horizontal-2000x200.jpg?v=1764873458",alt:"Black pool cue with blue stripe and P3 logo"},
+      {m:"P3 Exotic GCN",y:"2009",p:"$999",img:"retired-p3-1.png?v=1764873458",alt:"Brown patterned wood pool cue"},
+      {m:"P3 Racer RN",y:"2011",p:"$849",img:"retired-p3-5.png?v=1764873458",alt:"White pool cue with black stripe"}]},
+    {id:"revo",name:"REVO LE",year:"2014\u20132023",blurb:"Carbon-fiber flagships built around the REVO shaft.",cues:[
+      {m:"REVO 20th Anniversary LE 1",y:"2014",p:"$3,445",img:"retired-le-1_1.jpg?v=1764873459",alt:"Dark brown pool cue with intricate ivory design"},
+      {m:"P3 REVO USPBS Red",y:"2023",p:"$1,339",img:"retired-23-pre-p3-uspbs-red-nw-main-2000x200_1.jpg?v=1764873459",alt:"P3 USPBS Red no wrap pool cue"},
+      {m:"P3 REVO Leopard",y:"2020",p:"$1,349",img:"retired-20-Pred-P3-Leopard-Catalogue-W.jpg?v=1764873459",alt:"P3 Leopard pool cue no wrap"}]}
+  ]},
+  {fam:"Break & Jump", series:[
+    {id:"bk",name:"BK",year:"2001\u20132025",blurb:"The break-cue dynasty, from the original BK to the BK Rush.",cues:[
+      {m:"BK Rush Neon Green \u2014 Sport Wrap",y:"2025",p:"$899",img:"retired-25-bk-rush-neongreen-sw-front-1920x192.jpg?v=1764873455",alt:"Green BK Rush break cue"},
+      {m:"BK2SW Break Cue",y:"2005",p:"$469",img:"retired-bk_5.jpg?v=1764873455",alt:"Black pool cue with PREDATOR BK2 text and gold panther logo"},
+      {m:"BKNW Break Cue",y:"2001",p:"$375",img:"retired-bk_1.jpg?v=1764873454",alt:"Black pool cue with gold Predator branding"}]},
+    {id:"air",name:"AIR",year:"2007",blurb:"The original lightweight jump cue.",cues:[
+      {m:"Air Jump Cue",y:"2007",p:"$117",img:"retired-cues-air-jump.jpg?v=1764873454",alt:"Black pool cue with PREDATOR logo"}]}
+  ]},
+  {fam:"Sneaky Petes", series:[
+    {id:"sp",name:"Sneaky Petes",year:"2000\u20132021",blurb:"The understated hustler's choice.",cues:[
+      {m:"SP2 REVO Tuxedo 1",y:"2021",p:"$1,049",img:"retired-predator-revo-sp2-tuxedo-1-pool-cue-stick-2000x200_2.jpg?v=1764873460",alt:"Black and white pool cue with black panther logo"},
+      {m:"Model SP8RJ",y:"2006",p:"$604",img:"retired-sp-9.jpg?v=1764873460",alt:"Two-toned wood pool cue"},
+      {m:"Model SPWU",y:"2000",p:"$355",img:"retired-sp-1.jpg?v=1764873459",alt:"Two-toned wood pool cue with dark green accent"}]},
+    {id:"sport",name:"Sport",year:"2008\u20132020",blurb:"The performance-grip line for everyday players.",cues:[
+      {m:"Sport2 Ember \u2014 Sport Grip",y:"2020",p:"$579",img:"retired-predator-sport-ember-pool-cue-sport-wrap-dark-200x2000.jpg?v=1764873462",alt:"Red and black pool cue with red panther logo"},
+      {m:"Sport2 Stratos \u2014 Sport Grip",y:"2020",p:"$579",img:"retired-predator-sport-stratos-pool-cue-sport-grip-200x2000_1.jpg?v=1764873462",alt:"Blue and black pool cue with blue panther logo"},
+      {m:"Model SPORT",y:"2008",p:"$499",img:"sport-retired.png?v=1764873462",alt:"Glossy black pool cue with orange panther logo"}]},
+    {id:"roadline",name:"Roadline",year:"2011\u20132020",blurb:"The road player's working cue.",cues:[
+      {m:"LE Roadline 12",y:"2020",p:"$689",img:"retired-CP_PRE_LE_ROAD_12.jpg?v=1764873457",alt:"Cobalt blue pool cue with white detailing"},
+      {m:"LE Roadline 9",y:"2019",p:"$889",img:"retired-le-road-9.jpg?v=1764873457",alt:"Glossy red pool cue with white and blue accent"},
+      {m:"Road LE 4",y:"2011",p:"$729",img:"retired-hor-LE-Road-4.png?v=1764873459",alt:"Two-toned wooden pool cue with black band"}]}
+  ]},
+  {fam:"Collector", series:[
+    {id:"limited",name:"Limited Editions",year:"2004\u20132020",blurb:"The grails \u2014 anniversary cues and artist collaborations.",cues:[
+      {m:"Limited Edition Eagle Ebony",y:"2020",p:"$4,600",img:"retired-22-predator-le18-eagle-ebony-main-pool-cue-2000wx200h-web.png?v=1764873457",alt:"Ebony pool cue with intricate ivory detailing"},
+      {m:"20th Anniversary LE-20th-1",y:"2014",p:"$3,295",img:"retired-le-22.jpg?v=1764873457",alt:"Glossy black pool cue with intricate ivory detailing"},
+      {m:"Dragon by PFD Studios",y:"2014",p:"$2,795",img:"retired-le-21.jpg?v=1764873457",alt:"Black and white pool cue with green dragon design"}]},
+    {id:"limitedcrm",name:"Limited CRM",year:"2025",blurb:"The pinnacle of carom cue craft \u2014 the rarest cues in the archive.",cues:[
+      {m:"Carom 30th Anniversary \u2014 Ebony",y:"2025",p:"$7,900",img:"24-BCP-PRE-LE-30-EBO-long_horizontal.webp?v=1775502840",alt:"Limited Edition 30th Anniversary Ebony Carom Cue"},
+      {m:"Carom 30th Anniversary \u2014 Cocobolo",y:"2025",p:"$7,900",img:"24-BCP-PRE-LE-30-CO-long_horizontal.webp?v=1775502897",alt:"Limited Edition 30th Anniversary Cocobolo Carom Cue"},
+      {m:"CRM Green Dragon 1",y:"2025",p:"$5,420",img:"26-PRE-CRM-LE-Green-Dragon1-01-full-front-horizontal.webp?v=1775503497",alt:"Limited Edition Green Dragon 1 Carom Cue"}]},
+    {id:"special",name:"Special Editions",year:"2000\u20132021",blurb:"Collaborations with the world's finest cuemakers.",cues:[
+      {m:"SE-34 Maestro 1 by K. Miki",y:"2017",p:"$2,195",img:"retired-spe-38.jpg?v=1764873462",alt:"Pale wood and ivory pool cue"},
+      {m:"SE-26 Panthera",y:"2015",p:"$1,995",img:"retired-spe-30.jpg?v=1764873461",alt:"Light wood pool cue with dark wood accents"},
+      {m:"SE-12 by Jacoby",y:"2007",p:"$1,595",img:"retired-spe-16.jpg?v=1764873461",alt:"Black pool cue with red and pale wood accents"}]},
+    {id:"throne",name:"Throne",year:"2013\u20132017",blurb:"One of Predator's most ornate named series.",cues:[
+      {m:"Throne-5",y:"2013",p:"$1,499",img:"retired-hor-throne-5.jpg?v=1764873463",alt:"Black and light brown pool cue with diamond accents"},
+      {m:"Throne 2-5",y:"2017",p:"$1,499",img:"retired-throne2-5.jpg?v=1764873463",alt:"Cue stick with black and gold design"},
+      {m:"Throne-4",y:"2013",p:"$1,399",img:"retired-hor-throne-4.jpg?v=1764873462",alt:"Black and light brown pool cue with white accents"}]},
+    {id:"valour",name:"Valour",year:"2023",blurb:"A Jacoby collaboration line.",cues:[
+      {m:"Valour SL 4 by Jacoby",y:"2023",p:"$1,509",img:"retired-predator-valour-sl-4-pool-cue-by-jacoby-v3-2000x200_1.jpg?v=1764873463",alt:"Black and dark brown pool cue with green accents"},
+      {m:"Valour SL 2 by Jacoby",y:"2023",p:"$1,249",img:"retired-predator-valour-sl-2-pool-cue-by-jacoby-v3-2000x200.jpg?v=1764873463",alt:"Black and brown pool cue with turquoise accents"},
+      {m:"Valour SL 1 by Jacoby",y:"2023",p:"$1,119",img:"retired-predator-valour-sl-1-pool-cue-by-jacoby-v3-2000x200.jpg?v=1764873463",alt:"Glossy black and red pool cue with light brown accent"}]},
+    {id:"willie",name:"Willie",year:"2017",blurb:"The Willie Hoppe tribute line.",cues:[
+      {m:"Willie-5",y:"2017",p:"$1,149",img:"retired-willie-5.jpg?v=1764873463",alt:"Black and light brown pool cue with white design accents"},
+      {m:"Willie-3",y:"2017",p:"$1,119",img:"retired-willie-3.jpg?v=1764873463",alt:"Black and beige pool cue with white accents"},
+      {m:"Willie-1",y:"2017",p:"$1,049",img:"retired-willie-1.jpg?v=1764873463",alt:"Black and brown retired pool cue"}]}
+  ]}
+];
+
+const tier1=document.getElementById('tier1');
+const tier2=document.getElementById('tier2');
+const panel=document.getElementById('panel');
+let famIdx=0, serIdx=0;
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderTier1(){
+  tier1.innerHTML=DATA.map((f,i)=>
+    `<button class="fam" role="tab" aria-selected="${i===famIdx}" data-i="${i}">${esc(f.fam)}<span class="fcount">${f.series.length}</span></button>`
+  ).join('');
+  tier1.querySelectorAll('.fam').forEach(b=>b.addEventListener('click',()=>{famIdx=+b.dataset.i;serIdx=0;renderTier1();renderTier2();renderPanel();b.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}));
+}
+function renderTier2(){
+  const s=DATA[famIdx].series;
+  tier2.innerHTML=s.map((x,i)=>
+    `<button class="ser" role="tab" aria-selected="${i===serIdx}" data-i="${i}">${esc(x.name)}</button>`
+  ).join('');
+  tier2.querySelectorAll('.ser').forEach(b=>b.addEventListener('click',()=>{serIdx=+b.dataset.i;renderTier2();renderPanel();b.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});}));
+}
+function renderPanel(){
+  const fam=DATA[famIdx], ser=fam.series[serIdx];
+  const yr = ser.year ? `<span class="yr">${esc(ser.year)}</span>` : "";
+  let html=`<div class="panel-intro"><div><div class="breadcrumb">${esc(fam.fam)} &nbsp;/&nbsp; <b>${esc(ser.name)}</b></div><h2>${esc(ser.name)}${yr}</h2></div><p>${esc(ser.blurb)}</p></div>`;
+
+  // carousel of cue cards (figure on top, info below)
+  html+=`<div class="carousel"><div class="carousel-track" id="track">`;
+  ser.cues.forEach(c=>{
+    html+=`<div class="cue"><div class="cue-figure"><img src="${CDN+c.img}" alt="${esc(c.alt)}" loading="lazy"></div><div class="cue-info"><div class="model">${esc(c.m)}</div><div class="specs"><div class="spec"><b>Year</b><span>${esc(c.y)}</span></div><div class="spec"><b>Original Price</b><span>${esc(c.p)}</span></div></div><span class="retired-pill">Retired</span></div></div>`;
+  });
+  html+=`</div>`;
+  // nav: counter + dots + arrows (only if more than one cue)
+  if(ser.cues.length>1){
+    const dots=ser.cues.map((_,i)=>`<button class="car-dot" data-i="${i}" aria-current="${i===0}" aria-label="Go to cue ${i+1}"></button>`).join('');
+    html+=`<div class="car-nav">
+      <div class="car-counter" id="carCounter">1 / ${ser.cues.length}</div>
+      <div class="car-dots" id="carDots">${dots}</div>
+      <div class="car-arrows">
+        <button class="car-btn" id="carPrev" aria-label="Previous cue" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button class="car-btn" id="carNext" aria-label="Next cue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+    </div>`;
+  }
+  html+=`</div>`;
+  panel.innerHTML=html;
+  wireCarousel(ser.cues.length);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function wireCarousel(count){
+  const track=document.getElementById('track');
+  if(!track) return;
+  const prev=document.getElementById('carPrev');
+  const next=document.getElementById('carNext');
+  const counter=document.getElementById('carCounter');
+  const dots=document.getElementById('carDots');
+  const cards=[...track.querySelectorAll('.cue')];
+  if(count<=1) return;
+
+  function current(){
+    // index of card whose center is closest to track center
+    const mid=track.scrollLeft+track.clientWidth/2;
+    let best=0,bd=Infinity;
+    cards.forEach((c,i)=>{const cc=c.offsetLeft+c.offsetWidth/2;const d=Math.abs(cc-mid);if(d<bd){bd=d;best=i;}});
+    return best;
+  }
+  function goTo(i){
+    i=Math.max(0,Math.min(count-1,i));
+    const c=cards[i];
+    track.scrollTo({left:c.offsetLeft-(track.clientWidth-c.offsetWidth)/2,behavior:'smooth'});
+  }
+  function update(){
+    const i=current();
+    const max=track.scrollWidth-track.clientWidth;
+    prev.disabled = track.scrollLeft<=1;
+    next.disabled = track.scrollLeft>=max-1;
+    counter.textContent=`${i+1} / ${count}`;
+    dots.querySelectorAll('.car-dot').forEach((d,di)=>d.setAttribute('aria-current',di===i));
+  }
+  prev.addEventListener('click',()=>goTo(current()-1));
+  next.addEventListener('click',()=>goTo(current()+1));
+  dots.querySelectorAll('.car-dot').forEach(d=>d.addEventListener('click',()=>goTo(+d.dataset.i)));
+  track.addEventListener('scroll',update,{passive:true});
+  update();
+}
+renderTier1();renderTier2();renderPanel();
+</script>
+</body>
+</html>

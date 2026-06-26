@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predator Cues Archive — Slider Tabs Prototype</title>
+<style>
+  :root{
+    --font-head:"Futura","Futura PT","Century Gothic","Open Sans",sans-serif;
+    --font-body:"Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --bg:#fff;--surface:#fff;--surface-2:#f4f4f4;--surface-3:#f9f9f9;
+    --line:#e0e0e0;--line-strong:#c9c9c9;
+    --ink:#0a0a0a;--ink-2:#2b2b2b;--muted:#595959;
+    --gold:#ffd400;--gold-tint:#fff7cc;--maxw:1240px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;line-height:1.5}
+  img{display:block;max-width:100%}
+
+  .hero{border-bottom:1px solid var(--line);padding:56px 24px 34px;text-align:center}
+  .hero .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#fff;font-weight:700;margin-bottom:20px;display:inline-block;background:var(--ink);padding:7px 14px;border-radius:3px}
+  .hero h1{font-family:var(--font-head);font-weight:700;font-size:clamp(36px,6.5vw,68px);line-height:1;text-transform:uppercase;color:var(--ink)}
+  .hero h1 em{font-style:normal;position:relative}
+  .hero h1 em::after{content:"";position:absolute;left:-2%;right:-2%;bottom:.06em;height:.2em;background:var(--gold);z-index:-1}
+  .hero p{max-width:600px;margin:18px auto 0;color:var(--ink-2);font-size:16px;line-height:1.7}
+
+  /* ---------- SLIDER TAB STRIP ---------- */
+  .tabwrap{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line)}
+  .tabbar{max-width:var(--maxw);margin:0 auto;display:flex;align-items:stretch;position:relative}
+  .tabscroll{display:flex;gap:0;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;flex:1;scroll-snap-type:x proximity}
+  .tabscroll::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;scroll-snap-align:start;background:none;border:none;cursor:pointer;color:var(--ink-2);font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:18px 18px 15px;border-bottom:3px solid transparent;transition:color .15s,border-color .15s,background .15s;white-space:nowrap}
+  .tab:hover{color:var(--ink);background:var(--surface-3)}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+  .tab .count{margin-left:6px;font-size:11px;color:var(--muted);font-weight:600}
+  .tab[aria-selected="true"] .count{color:var(--ink)}
+
+  /* arrow controls */
+  .arrow{flex:0 0 auto;width:44px;border:none;background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--ink);font-size:18px;position:relative;z-index:2;transition:opacity .2s,background .15s}
+  .arrow:hover{background:var(--surface-2)}
+  .arrow:disabled{opacity:.25;cursor:default}
+  .arrow.left{box-shadow:14px 0 14px -10px rgba(0,0,0,.12)}
+  .arrow.right{box-shadow:-14px 0 14px -10px rgba(0,0,0,.12)}
+  .arrow svg{width:16px;height:16px}
+
+  /* progress underline showing scroll position */
+  .scrollbar{max-width:var(--maxw);margin:0 auto;height:2px;background:var(--surface-2);position:relative}
+  .scrollbar .thumb{position:absolute;top:0;left:0;height:2px;background:var(--ink);width:20%;transition:left .1s linear,width .1s linear}
+
+  /* ---------- Panels ---------- */
+  .panel{display:none;max-width:var(--maxw);margin:0 auto;padding:38px 24px 80px}
+  .panel.active{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:6px;padding-bottom:20px;border-bottom:2px solid var(--ink)}
+  .panel-intro h2{font-family:var(--font-head);font-weight:700;font-size:clamp(24px,3.6vw,38px);text-transform:uppercase;color:var(--ink)}
+  .panel-intro .yr{color:var(--ink);font-weight:400;background:var(--gold);padding:2px 10px;border-radius:3px;font-size:.62em;vertical-align:middle;margin-left:8px}
+  .panel-intro p{color:var(--ink-2);font-size:14px;max-width:440px}
+
+  .cue{display:flex;flex-direction:column-reverse;padding:30px 0;border-top:1px solid var(--line)}
+  .cue:first-child{border-top:none}
+  .cue-figure{background:var(--surface-3);border:1px solid var(--line);border-radius:4px;padding:34px 48px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+  .cue-figure img{width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.18))}
+  .cue-info{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+  .cue-info .model{font-family:var(--font-head);font-weight:700;font-size:24px;color:var(--ink);text-transform:uppercase}
+  .cue-info .specs{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-end}
+  .cue-info .spec b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:700}
+  .cue-info .spec span{font-size:15px;color:var(--ink);font-weight:600}
+  .retired-pill{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:var(--ink);padding:5px 11px;border-radius:99px;font-weight:700}
+
+  .upsell{margin:30px 0 8px;background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;padding:28px 30px}
+  .upsell .kicker{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#fff;background:var(--ink);padding:5px 10px;border-radius:3px;font-weight:700;margin-bottom:12px}
+  .upsell h3{font-family:var(--font-head);font-weight:700;font-size:21px;margin-bottom:8px;color:var(--ink);text-transform:uppercase}
+  .upsell p{color:var(--ink-2);font-size:14px;max-width:580px;margin-bottom:20px}
+  .upsell-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .up-card{background:var(--surface);border:1px solid var(--line);border-radius:5px;overflow:hidden;text-decoration:none;color:inherit;transition:border-color .2s,transform .2s,box-shadow .2s}
+  .up-card:hover{border-color:var(--ink);transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.1)}
+  .up-card .thumb{aspect-ratio:16/9;background:var(--surface-3);display:grid;place-items:center;border-bottom:1px solid var(--line)}
+  .up-card .thumb span{background:var(--ink);color:#fff;font-size:11px;letter-spacing:.08em;font-weight:700;padding:5px 10px;border-radius:3px}
+  .up-card .body{padding:13px 15px}
+  .up-card .name{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+  .up-card .meta{font-size:13px;color:var(--muted)}
+  .up-card .meta .now{color:var(--ink);font-weight:700}
+  .up-cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;background:var(--ink);color:#fff;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:13px 24px;border-radius:4px;border:1px solid var(--ink);transition:background .18s,color .18s}
+  .up-cta:hover{background:#fff;color:var(--ink)}
+  .up-cta::after{content:"\2192"}
+
+  @media(max-width:760px){
+    .cue{padding:22px 0}
+    .cue-figure{padding:22px 18px}
+    .cue-info{flex-direction:column;align-items:flex-start;gap:12px}
+    .upsell-grid{grid-template-columns:1fr}
+    .panel{padding:26px 16px 60px}.hero{padding:42px 18px 28px}
+    .arrow{display:none}      /* touch devices swipe instead */
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">30 Years of Cue-Making</div>
+  <h1>The Predator <em>Archive</em></h1>
+  <p>A living record of every retired and discontinued Predator cue. Browse by series &mdash; then carry the lineage forward with the cues we build today.</p>
+</header>
+
+<div class="tabwrap">
+  <div class="tabbar">
+    <button class="arrow left" id="arrowL" aria-label="Scroll categories left" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="tabscroll" id="tabscroll" role="tablist" aria-label="Archive series">
+      <button class="tab" role="tab" aria-selected="true"  data-panel="p1">1996</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p2">1998</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p3">1999</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p4">2K</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p5">3K</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p6">4K</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p7">5K</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p8">8K</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p9">AIR</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p10">BK</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p11">BLAK</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p12">BLAK2</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p13">BLAK3</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p14">IKON</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p15">IKON2</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p16">IKON3</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p17">K Classics</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p18">Limited Editions</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p19">Limited CRM</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p20">P2</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p21">P3</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p22">REVO LE</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p23">Roadline</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p24">Sneaky Petes</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p25">Special Editions</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p26">Sport</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p27">Throne</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p28">Valour</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="p29">Willie</button>
+    </div>
+    <button class="arrow right" id="arrowR" aria-label="Scroll categories right">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+  <div class="scrollbar"><div class="thumb" id="scrollThumb"></div></div>
+</div>
+
+<!-- p1 1996 -->
+<section class="panel active" id="p1" role="tabpanel">
+  <div class="panel-intro"><h2>1996 Series<span class="yr">1996</span></h2><p>The cues that started it all &mdash; the original 314 lineage.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 314-6</div><div class="specs"><div class="spec"><b>Year</b><span>1996</span></div><div class="spec"><b>Original Price</b><span>$1,050</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-96_6.jpg?v=1764873453" alt="Glossy brown wood pool cue with white diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 314-5</div><div class="specs"><div class="spec"><b>Year</b><span>1996</span></div><div class="spec"><b>Original Price</b><span>$950</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-96_5.jpg?v=1764873453" alt="Glossy brown wood pool cue with ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 314-3</div><div class="specs"><div class="spec"><b>Year</b><span>1996</span></div><div class="spec"><b>Original Price</b><span>$650</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-96_3.jpg?v=1764873453" alt="Glossy brown wood retired pool cue"></div></div>
+  <div class="upsell"><div class="kicker">The lineage lives on</div><h3>The 314 evolved into today's most-played shaft.</h3><p>The original 314 became the 314-3 low-deflection shaft, still a tournament staple worldwide.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>314-3 SHAFT</span></div><div class="body"><div class="name">Predator 314-3 Shaft</div><div class="meta"><span class="now">$269</span> &middot; In stock</div></div></a><a class="up-card" href="#"><div class="thumb"><span>REVO 12.4</span></div><div class="body"><div class="name">REVO Carbon Shaft</div><div class="meta"><span class="now">$469</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>VANTAGE</span></div><div class="body"><div class="name">Vantage Shaft</div><div class="meta"><span class="now">$199</span></div></div></a></div><a class="up-cta" href="#">Shop current shafts</a></div>
+</section>
+
+<!-- p2 1998 -->
+<section class="panel" id="p2" role="tabpanel">
+  <div class="panel-intro"><h2>1998 Series<span class="yr">1998</span></h2><p>Refining the formula in the second wave of production cues.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 98-6</div><div class="specs"><div class="spec"><b>Year</b><span>1998</span></div><div class="spec"><b>Original Price</b><span>$955</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-98_6.jpg?v=1764873453" alt="Wood pool cue with green and white accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 98-5</div><div class="specs"><div class="spec"><b>Year</b><span>1998</span></div><div class="spec"><b>Original Price</b><span>$825</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-98_5.jpg?v=1764873453" alt="Brown wooden pool cue with white diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 98-1</div><div class="specs"><div class="spec"><b>Year</b><span>1998</span></div><div class="spec"><b>Original Price</b><span>$420</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-98_1.jpg?v=1764873453" alt="Dark brown wood retired pool cue"></div></div>
+</section>
+
+<!-- p3 1999 -->
+<section class="panel" id="p3" role="tabpanel">
+  <div class="panel-intro"><h2>1999 Series<span class="yr">1999</span></h2><p>The closing chapter of the founding era.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 99-6</div><div class="specs"><div class="spec"><b>Year</b><span>1999</span></div><div class="spec"><b>Original Price</b><span>$995</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-99_4.jpg?v=1764873453" alt="Pool cue with black and silver design"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 99-5</div><div class="specs"><div class="spec"><b>Year</b><span>1999</span></div><div class="spec"><b>Original Price</b><span>$845</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-99_6.jpg?v=1764873453" alt="Two-toned wood pool cue with black wrap"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 99-2</div><div class="specs"><div class="spec"><b>Year</b><span>1999</span></div><div class="spec"><b>Original Price</b><span>$495</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-99_2.jpg?v=1764873453" alt="Glossy wood retired pool cue with black wrap"></div></div>
+</section>
+
+<!-- p4 2K -->
+<section class="panel" id="p4" role="tabpanel">
+  <div class="panel-intro"><h2>2K Series<span class="yr">2000</span></h2><p>The first numbered production line.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 2K-6</div><div class="specs"><div class="spec"><b>Year</b><span>2000</span></div><div class="spec"><b>Original Price</b><span>$1,050</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-2k_6.jpg?v=1764873453" alt="Dark brown wood pool cue with white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 2K-5</div><div class="specs"><div class="spec"><b>Year</b><span>2000</span></div><div class="spec"><b>Original Price</b><span>$925</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-2k_5.jpg?v=1764873453" alt="Two-tone wood pool cue with white diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 2K-2</div><div class="specs"><div class="spec"><b>Year</b><span>2000</span></div><div class="spec"><b>Original Price</b><span>$545</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-2k_2.jpg?v=1764873453" alt="Brown wood pool cue with textured wrap"></div></div>
+</section>
+
+<!-- p5 3K -->
+<section class="panel" id="p5" role="tabpanel">
+  <div class="panel-intro"><h2>3K Series<span class="yr">2002</span></h2><p>Expanding the production catalogue.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 3K-7</div><div class="specs"><div class="spec"><b>Year</b><span>2002</span></div><div class="spec"><b>Original Price</b><span>$1,125</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-3k_7.jpg?v=1764873454" alt="Pale wood pool cue with black and white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 3K-6</div><div class="specs"><div class="spec"><b>Year</b><span>2002</span></div><div class="spec"><b>Original Price</b><span>$945</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-3k_6.jpg?v=1764873453" alt="Pool cue with red and black design"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 3K-1</div><div class="specs"><div class="spec"><b>Year</b><span>2002</span></div><div class="spec"><b>Original Price</b><span>$525</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-3k_1.jpg?v=1764873453" alt="Black pool cue with textured black wrap"></div></div>
+</section>
+
+<!-- p6 4K -->
+<section class="panel" id="p6" role="tabpanel">
+  <div class="panel-intro"><h2>4K Series<span class="yr">2004</span></h2><p>Mid-decade evolution of the core line.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 4K-7</div><div class="specs"><div class="spec"><b>Year</b><span>2004</span></div><div class="spec"><b>Original Price</b><span>$1,145</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-4k_7.jpg?v=1764873454" alt="Pool cue with pale wood accents and textured black wrap"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 4K-6</div><div class="specs"><div class="spec"><b>Year</b><span>2004</span></div><div class="spec"><b>Original Price</b><span>$965</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-4k_6.jpg?v=1764873454" alt="Dark brown glossy pool cue with white and turquoise"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 4K-1</div><div class="specs"><div class="spec"><b>Year</b><span>2004</span></div><div class="spec"><b>Original Price</b><span>$545</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-4k_1.jpg?v=1764873454" alt="Glossy black pool cue with textured black wrap"></div></div>
+</section>
+
+<!-- p7 5K -->
+<section class="panel" id="p7" role="tabpanel">
+  <div class="panel-intro"><h2>5K Series<span class="yr">2006</span></h2><p>The most expansive K-series run.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 5K-8</div><div class="specs"><div class="spec"><b>Year</b><span>2006</span></div><div class="spec"><b>Original Price</b><span>$1,244</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-5k_8.jpg?v=1764873454" alt="Black pool cue with silver tip and intricate designs"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 5K-5</div><div class="specs"><div class="spec"><b>Year</b><span>2006</span></div><div class="spec"><b>Original Price</b><span>$924</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-5k_5.jpg?v=1764873454" alt="Black and pale wood pool cue with intricate designs"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 5K-1</div><div class="specs"><div class="spec"><b>Year</b><span>2006</span></div><div class="spec"><b>Original Price</b><span>$554</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-5k_1.jpg?v=1764873454" alt="Glossy black pool cue with textured wrap"></div></div>
+  <div class="upsell"><div class="kicker">Production workhorse</div><h3>The K-series spirit continues in the BLAK and P3.</h3><p>Tournament-grade build with modern low-deflection tech.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>BLAK 4</span></div><div class="body"><div class="name">Predator BLAK4</div><div class="meta"><span class="now">$1,099</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>P3 REVO</span></div><div class="body"><div class="name">Predator P3</div><div class="meta"><span class="now">$1,349</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>10K</span></div><div class="body"><div class="name">Predator 10K</div><div class="meta"><span class="now">$1,599</span> &middot; New</div></div></a></div><a class="up-cta" href="#">Shop current cues</a></div>
+</section>
+
+<!-- p8 8K -->
+<section class="panel" id="p8" role="tabpanel">
+  <div class="panel-intro"><h2>8K Series<span class="yr">2014</span></h2><p>The final entry in the K lineage.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 8K-4</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$939</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-8k-4-retired.jpg?v=1764873455" alt="Brown wood pool cue with turquoise and ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 8K-3</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$799</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-8k-3-retired.jpg?v=1764873454" alt="Dark brown pool cue with ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model 8K-1</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$639</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-8k-1-retired.jpg?v=1764873454" alt="Glossy dark brown pool cue with textured brown wrap"></div></div>
+</section>
+
+<!-- p9 AIR -->
+<section class="panel" id="p9" role="tabpanel">
+  <div class="panel-intro"><h2>AIR Series<span class="yr">2007</span></h2><p>The original lightweight jump cue.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Air Jump Cue</div><div class="specs"><div class="spec"><b>Year</b><span>2007</span></div><div class="spec"><b>Original Price</b><span>$117</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-cues-air-jump.jpg?v=1764873454" alt="Black pool cue with PREDATOR logo"></div></div>
+  <div class="upsell"><div class="kicker">Get airborne</div><h3>The Air lineage flies on with Air Rush and Air II.</h3><p>Modern jump cues engineered for clean, legal jumps.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>AIR RUSH</span></div><div class="body"><div class="name">Air Rush Jump Cue</div><div class="meta"><span class="now">$549</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>AIR II</span></div><div class="body"><div class="name">Air II Jump Cue</div><div class="meta"><span class="now">$329</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>BK RUSH+</span></div><div class="body"><div class="name">BK Rush+ Jump/Break</div><div class="meta"><span class="now">$999</span></div></div></a></div><a class="up-cta" href="#">Shop jump cues</a></div>
+</section>
+
+<!-- p10 BK -->
+<section class="panel" id="p10" role="tabpanel">
+  <div class="panel-intro"><h2>BK Series<span class="yr">2001&ndash;2025</span></h2><p>The break-cue dynasty, from the original BK to the BK Rush.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">BK Rush Neon Green &mdash; Sport Wrap</div><div class="specs"><div class="spec"><b>Year</b><span>2025</span></div><div class="spec"><b>Original Price</b><span>$899</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-25-bk-rush-neongreen-sw-front-1920x192.jpg?v=1764873455" alt="Green BK Rush break cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">BK2SW Break Cue</div><div class="specs"><div class="spec"><b>Year</b><span>2005</span></div><div class="spec"><b>Original Price</b><span>$469</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-bk_5.jpg?v=1764873455" alt="Black pool cue with PREDATOR BK2 text and gold panther logo"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">BKNW Break Cue</div><div class="specs"><div class="spec"><b>Year</b><span>2001</span></div><div class="spec"><b>Original Price</b><span>$375</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-bk_1.jpg?v=1764873454" alt="Black pool cue with gold Predator branding"></div></div>
+  <div class="upsell"><div class="kicker">Just retired &mdash; grab the current run</div><h3>The BK Rush still breaks just as hard.</h3><p>Missed the Neon Green? The current lineup is in stock.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>BK RUSH</span></div><div class="body"><div class="name">BK Rush Break Cue</div><div class="meta"><span class="now">$849</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>BK RUSH+</span></div><div class="body"><div class="name">BK Rush+ Jump/Break</div><div class="meta"><span class="now">$999</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>BK4</span></div><div class="body"><div class="name">BK4 Break Cue</div><div class="meta"><span class="now">$429</span></div></div></a></div><a class="up-cta" href="#">Shop break cues</a></div>
+</section>
+
+<!-- p11 BLAK -->
+<section class="panel" id="p11" role="tabpanel">
+  <div class="panel-intro"><h2>BLAK Series<span class="yr">2007</span></h2><p>The original all-black aesthetic.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK-4</div><div class="specs"><div class="spec"><b>Year</b><span>2007</span></div><div class="spec"><b>Original Price</b><span>$1,499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired_blak4.jpg?v=1764873455" alt="Black retired pool cue with intricate white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK-3</div><div class="specs"><div class="spec"><b>Year</b><span>2007</span></div><div class="spec"><b>Original Price</b><span>$1,359</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired_blak3.jpg?v=1764873455" alt="Black retired pool cue with white diamond detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK-1</div><div class="specs"><div class="spec"><b>Year</b><span>2007</span></div><div class="spec"><b>Original Price</b><span>$1,099</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired_blak1.jpg?v=1764873455" alt="Black pool cue with intricate white detailing"></div></div>
+</section>
+
+<!-- p12 BLAK2 -->
+<section class="panel" id="p12" role="tabpanel">
+  <div class="panel-intro"><h2>BLAK2 Series<span class="yr">2009</span></h2><p>The second generation of the blacked-out line.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK2-4</div><div class="specs"><div class="spec"><b>Year</b><span>2009</span></div><div class="spec"><b>Original Price</b><span>$1,499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/blak2-4-retired.jpg?v=1764873455" alt="Black retired pool cue with white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK2-3</div><div class="specs"><div class="spec"><b>Year</b><span>2009</span></div><div class="spec"><b>Original Price</b><span>$1,399</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/blak2-3-retired.jpg?v=1764873455" alt="Black pool cue with silver ferrule"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK2-1</div><div class="specs"><div class="spec"><b>Year</b><span>2009</span></div><div class="spec"><b>Original Price</b><span>$1,099</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/blak2-1-retired.jpg?v=1764873455" alt="Black pool cue with decorative elements"></div></div>
+</section>
+
+<!-- p13 BLAK3 -->
+<section class="panel" id="p13" role="tabpanel">
+  <div class="panel-intro"><h2>BLAK3 Series<span class="yr">2015</span></h2><p>The third and most refined BLAK generation.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK3-5</div><div class="specs"><div class="spec"><b>Year</b><span>2015</span></div><div class="spec"><b>Original Price</b><span>$1,559</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/17-Pred-BLAK3-5-retired.jpg?v=1764873455" alt="Black retired pool cue with white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK3-4</div><div class="specs"><div class="spec"><b>Year</b><span>2015</span></div><div class="spec"><b>Original Price</b><span>$1,399</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/17-Pred-BLAK3-4-retired.jpg?v=1764873455" alt="Black pool cue with silver accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model BLAK3-1</div><div class="specs"><div class="spec"><b>Year</b><span>2015</span></div><div class="spec"><b>Original Price</b><span>$1,059</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/17-Pred-BLAK3-1-retired.jpg?v=1764873455" alt="Black retired pool cue with intricate white detailing"></div></div>
+  <div class="upsell"><div class="kicker">Still in the lineup</div><h3>The BLAK legacy continues today.</h3><p>Modern carbon-fiber performance, same blacked-out look.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>BLAK 4</span></div><div class="body"><div class="name">Predator BLAK4</div><div class="meta"><span class="now">$1,099</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>ONYX</span></div><div class="body"><div class="name">P3 Onyx</div><div class="meta"><span class="now">$999</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>BLAK PL</span></div><div class="body"><div class="name">BLAK Pool Cues</div><div class="meta"><span class="now">From $899</span></div></div></a></div><a class="up-cta" href="#">Shop BLAK cues</a></div>
+</section>
+
+<!-- p14 IKON -->
+<section class="panel" id="p14" role="tabpanel">
+  <div class="panel-intro"><h2>IKON Series<span class="yr">2008</span></h2><p>The original design-forward line, nine models deep.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON-9</div><div class="specs"><div class="spec"><b>Year</b><span>2008</span></div><div class="spec"><b>Original Price</b><span>$1,449</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-ikon-9.jpg?v=1764873455" alt="Black pool cue with red and beige detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON-5</div><div class="specs"><div class="spec"><b>Year</b><span>2008</span></div><div class="spec"><b>Original Price</b><span>$999</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-ikon-5.jpg?v=1764873455" alt="Black and red pool cue with a white tip"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON-1</div><div class="specs"><div class="spec"><b>Year</b><span>2008</span></div><div class="spec"><b>Original Price</b><span>$599</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-ikon-1.jpg?v=1764873455" alt="Glossy black pool cue with textured black wrap"></div></div>
+</section>
+
+<!-- p15 IKON2 -->
+<section class="panel" id="p15" role="tabpanel">
+  <div class="panel-intro"><h2>IKON2 Series<span class="yr">2011</span></h2><p>The second IKON generation.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON2-9</div><div class="specs"><div class="spec"><b>Year</b><span>2011</span></div><div class="spec"><b>Original Price</b><span>$1,499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-ikon2-9.png?v=1764873456" alt="Black pool cue with white and blue diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON2-6</div><div class="specs"><div class="spec"><b>Year</b><span>2011</span></div><div class="spec"><b>Original Price</b><span>$1,099</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-ikon2-6.png?v=1764873456" alt="Black pool cue with red diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON2-1</div><div class="specs"><div class="spec"><b>Year</b><span>2011</span></div><div class="spec"><b>Original Price</b><span>$649</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-ikon2-1.png?v=1764873456" alt="Black ikon pool cue with textured black wrap"></div></div>
+</section>
+
+<!-- p16 IKON3 -->
+<section class="panel" id="p16" role="tabpanel">
+  <div class="panel-intro"><h2>IKON3 Series<span class="yr">2016</span></h2><p>The final IKON generation.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON3-5</div><div class="specs"><div class="spec"><b>Year</b><span>2016</span></div><div class="spec"><b>Original Price</b><span>$1,399</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-ikon-3-5-retired.jpg?v=1764873456" alt="Ivory and pale wood pool cue with intricate design"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON3-4</div><div class="specs"><div class="spec"><b>Year</b><span>2016</span></div><div class="spec"><b>Original Price</b><span>$1,269</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-ikon-3-4-retired.jpg?v=1764873456" alt="Red pool cue with pale wood detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model IKON3-1</div><div class="specs"><div class="spec"><b>Year</b><span>2016</span></div><div class="spec"><b>Original Price</b><span>$899</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/Pred-ikon-3-1-retired.jpg?v=1764873456" alt="Ivory and red pool cue"></div></div>
+</section>
+
+<!-- p17 K Classics -->
+<section class="panel" id="p17" role="tabpanel">
+  <div class="panel-intro"><h2>K Series Classics</h2><p>A retro tribute to the K-series era.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">K Series Classics 1-4</div><div class="specs"><div class="spec"><b>Original Price</b><span>$1,009</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-_PRED-LE-RETROK-CAT-R4-2000x200_copy.png?v=1764873457" alt="Dark wood pool cue with green and ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">K Series Classics 1-2</div><div class="specs"><div class="spec"><b>Original Price</b><span>$919</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-_PRED-LE-RETROK-CAT-R2-2000x200_copy.png?v=1764873456" alt="Glossy wood pool cue with black accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">K Series Classics 1-1</div><div class="specs"><div class="spec"><b>Original Price</b><span>$849</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-_PRED-LE-RETROK-CAT-R1-2000x200_copy.png?v=1764873456" alt="Brown wood pool cue with green and black accents"></div></div>
+</section>
+
+<!-- p18 Limited Editions -->
+<section class="panel" id="p18" role="tabpanel">
+  <div class="panel-intro"><h2>Limited Editions<span class="yr">2004&ndash;2020</span></h2><p>The grails &mdash; anniversary cues and artist collaborations.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Limited Edition Eagle Ebony</div><div class="specs"><div class="spec"><b>Year</b><span>2020</span></div><div class="spec"><b>Original Price</b><span>$4,600</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-22-predator-le18-eagle-ebony-main-pool-cue-2000wx200h-web.png?v=1764873457" alt="Ebony pool cue with intricate ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">20th Anniversary LE-20th-1</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$3,295</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-le-22.jpg?v=1764873457" alt="Glossy black pool cue with intricate ivory detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Dragon by PFD Studios</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$2,795</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-le-21.jpg?v=1764873457" alt="Black and white pool cue with green dragon design"></div></div>
+  <div class="upsell"><div class="kicker">For collectors</div><h3>Today's limited runs become tomorrow's archive.</h3><p>Current limited editions sell out fast &mdash; secure one while it's live.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>ARTISAN</span></div><div class="body"><div class="name">Limited Artisan Series</div><div class="meta"><span class="now">From $2,195</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>TRUE SPLICE</span></div><div class="body"><div class="name">True Splice 16</div><div class="meta"><span class="now">From $1,799</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>10K LE</span></div><div class="body"><div class="name">10K Limited</div><div class="meta"><span class="now">From $1,599</span></div></div></a></div><a class="up-cta" href="#">Shop limited editions</a></div>
+</section>
+
+<!-- p19 Limited CRM -->
+<section class="panel" id="p19" role="tabpanel">
+  <div class="panel-intro"><h2>Predator Limited Editions CRM<span class="yr">2025</span></h2><p>The pinnacle of carom cue craft &mdash; the rarest, most valuable cues in the archive.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Carom 30th Anniversary &mdash; Ebony</div><div class="specs"><div class="spec"><b>Year</b><span>2025</span></div><div class="spec"><b>Original Price</b><span>$7,900</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/24-BCP-PRE-LE-30-EBO-long_horizontal.webp?v=1775502840" alt="Limited Edition 30th Anniversary Ebony Carom Cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Carom 30th Anniversary &mdash; Cocobolo</div><div class="specs"><div class="spec"><b>Year</b><span>2025</span></div><div class="spec"><b>Original Price</b><span>$7,900</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/24-BCP-PRE-LE-30-CO-long_horizontal.webp?v=1775502897" alt="Limited Edition 30th Anniversary Cocobolo Carom Cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">CRM Green Dragon 1</div><div class="specs"><div class="spec"><b>Year</b><span>2025</span></div><div class="spec"><b>Original Price</b><span>$5,420</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/26-PRE-CRM-LE-Green-Dragon1-01-full-front-horizontal.webp?v=1775503497" alt="Limited Edition Green Dragon 1 Carom Cue"></div></div>
+</section>
+
+<!-- p20 P2 -->
+<section class="panel" id="p20" role="tabpanel">
+  <div class="panel-intro"><h2>P2 Series<span class="yr">2000&ndash;2005</span></h2><p>The Predator 2 platform &mdash; metallics and curly maple.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">P2 Curly Maple Burgundy</div><div class="specs"><div class="spec"><b>Year</b><span>2005</span></div><div class="spec"><b>Original Price</b><span>$1,054</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-p2-7.jpg?v=1764873458" alt="Burgundy patterned wood pool cue butt"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P2 Curly Maple</div><div class="specs"><div class="spec"><b>Year</b><span>2003</span></div><div class="spec"><b>Original Price</b><span>$1,004</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-p2-5.jpg?v=1764873458" alt="Pale wood pool cue butt"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P2 Metallic Blue</div><div class="specs"><div class="spec"><b>Year</b><span>2004</span></div><div class="spec"><b>Original Price</b><span>$704</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-p2-2.jpg?v=1764873457" alt="Glossy deep blue pool cue butt"></div></div>
+</section>
+
+<!-- p21 P3 -->
+<section class="panel" id="p21" role="tabpanel">
+  <div class="panel-intro"><h2>P3 Series<span class="yr">2009&ndash;2021</span></h2><p>The platform that carried Predator for a decade.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">P3 Cobalt Blue Racer</div><div class="specs"><div class="spec"><b>Year</b><span>2021</span></div><div class="spec"><b>Original Price</b><span>$969</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-p3-racer-cobalt-pool-cue-nw-horizontal-2000x200.jpg?v=1764873458" alt="Black pool cue with blue stripe and P3 logo"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P3 Exotic GCN</div><div class="specs"><div class="spec"><b>Year</b><span>2009</span></div><div class="spec"><b>Original Price</b><span>$999</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-p3-1.png?v=1764873458" alt="Brown patterned wood pool cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P3 Racer RN</div><div class="specs"><div class="spec"><b>Year</b><span>2011</span></div><div class="spec"><b>Original Price</b><span>$849</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-p3-5.png?v=1764873458" alt="White pool cue with black stripe"></div></div>
+  <div class="upsell"><div class="kicker">The current flagship</div><h3>The P3 platform is still in production.</h3><p>Fully customizable, REVO-ready, the choice of today's touring pros.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>P3 REVO</span></div><div class="body"><div class="name">Predator P3</div><div class="meta"><span class="now">From $1,349</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>P3 CUSTOM</span></div><div class="body"><div class="name">Build Your P3</div><div class="meta"><span class="now">Configurator</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>10K</span></div><div class="body"><div class="name">Predator 10K</div><div class="meta"><span class="now">$1,599</span></div></div></a></div><a class="up-cta" href="#">Shop P3 cues</a></div>
+</section>
+
+<!-- p22 REVO LE -->
+<section class="panel" id="p22" role="tabpanel">
+  <div class="panel-intro"><h2>REVO Limited Editions<span class="yr">2014&ndash;2023</span></h2><p>Carbon-fiber flagships built around the REVO shaft.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">REVO 20th Anniversary LE 1</div><div class="specs"><div class="spec"><b>Year</b><span>2014</span></div><div class="spec"><b>Original Price</b><span>$3,445</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-le-1_1.jpg?v=1764873459" alt="Dark brown pool cue with intricate ivory design"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P3 REVO USPBS Red</div><div class="specs"><div class="spec"><b>Year</b><span>2023</span></div><div class="spec"><b>Original Price</b><span>$1,339</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-23-pre-p3-uspbs-red-nw-main-2000x200_1.jpg?v=1764873459" alt="P3 USPBS Red no wrap pool cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">P3 REVO Leopard</div><div class="specs"><div class="spec"><b>Year</b><span>2020</span></div><div class="spec"><b>Original Price</b><span>$1,349</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-20-Pred-P3-Leopard-Catalogue-W.jpg?v=1764873459" alt="P3 Leopard pool cue no wrap"></div></div>
+</section>
+
+<!-- p23 Roadline -->
+<section class="panel" id="p23" role="tabpanel">
+  <div class="panel-intro"><h2>Roadline Series<span class="yr">2011&ndash;2020</span></h2><p>The road player's working cue.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">LE Roadline 12</div><div class="specs"><div class="spec"><b>Year</b><span>2020</span></div><div class="spec"><b>Original Price</b><span>$689</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-CP_PRE_LE_ROAD_12.jpg?v=1764873457" alt="Cobalt blue pool cue with white detailing"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">LE Roadline 9</div><div class="specs"><div class="spec"><b>Year</b><span>2019</span></div><div class="spec"><b>Original Price</b><span>$889</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-le-road-9.jpg?v=1764873457" alt="Glossy red pool cue with white and blue accent"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Road LE 4</div><div class="specs"><div class="spec"><b>Year</b><span>2011</span></div><div class="spec"><b>Original Price</b><span>$729</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-LE-Road-4.png?v=1764873459" alt="Two-toned wooden pool cue with black band"></div></div>
+</section>
+
+<!-- p24 Sneaky Petes -->
+<section class="panel" id="p24" role="tabpanel">
+  <div class="panel-intro"><h2>Sneaky Petes<span class="yr">2000&ndash;2021</span></h2><p>The understated hustler's choice.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">SP2 REVO Tuxedo 1</div><div class="specs"><div class="spec"><b>Year</b><span>2021</span></div><div class="spec"><b>Original Price</b><span>$1,049</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-revo-sp2-tuxedo-1-pool-cue-stick-2000x200_2.jpg?v=1764873460" alt="Black and white pool cue with black panther logo"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model SP8RJ</div><div class="specs"><div class="spec"><b>Year</b><span>2006</span></div><div class="spec"><b>Original Price</b><span>$604</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-sp-9.jpg?v=1764873460" alt="Two-toned wood pool cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model SPWU</div><div class="specs"><div class="spec"><b>Year</b><span>2000</span></div><div class="spec"><b>Original Price</b><span>$355</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-sp-1.jpg?v=1764873459" alt="Two-toned wood pool cue with dark green accent"></div></div>
+  <div class="upsell"><div class="kicker">Hustle on</div><h3>Modern Sneaky Petes are in stock now.</h3><p>Classic looks, carbon-fiber performance under the hood.</p><div class="upsell-grid"><a class="up-card" href="#"><div class="thumb"><span>SP NW</span></div><div class="body"><div class="name">Sneaky Pete No Wrap</div><div class="meta"><span class="now">$329</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>SP2 REVO</span></div><div class="body"><div class="name">SP2 REVO</div><div class="meta"><span class="now">$1,049</span></div></div></a><a class="up-card" href="#"><div class="thumb"><span>TRUE SPLICE</span></div><div class="body"><div class="name">True Splice 16</div><div class="meta"><span class="now">From $1,799</span></div></div></a></div><a class="up-cta" href="#">Shop Sneaky Petes</a></div>
+</section>
+
+<!-- p25 Special Editions -->
+<section class="panel" id="p25" role="tabpanel">
+  <div class="panel-intro"><h2>Special Editions<span class="yr">2000&ndash;2021</span></h2><p>Collaborations with the world's finest cuemakers.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">SE-34 Maestro 1 by K. Miki</div><div class="specs"><div class="spec"><b>Year</b><span>2017</span></div><div class="spec"><b>Original Price</b><span>$2,195</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-spe-38.jpg?v=1764873462" alt="Pale wood and ivory pool cue"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">SE-26 Panthera</div><div class="specs"><div class="spec"><b>Year</b><span>2015</span></div><div class="spec"><b>Original Price</b><span>$1,995</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-spe-30.jpg?v=1764873461" alt="Light wood pool cue with dark wood accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">SE-12 by Jacoby</div><div class="specs"><div class="spec"><b>Year</b><span>2007</span></div><div class="spec"><b>Original Price</b><span>$1,595</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-spe-16.jpg?v=1764873461" alt="Black pool cue with red and pale wood accents"></div></div>
+</section>
+
+<!-- p26 Sport -->
+<section class="panel" id="p26" role="tabpanel">
+  <div class="panel-intro"><h2>Sport Series<span class="yr">2008&ndash;2020</span></h2><p>The performance-grip line for everyday players.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Sport2 Ember &mdash; Sport Grip</div><div class="specs"><div class="spec"><b>Year</b><span>2020</span></div><div class="spec"><b>Original Price</b><span>$579</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-sport-ember-pool-cue-sport-wrap-dark-200x2000.jpg?v=1764873462" alt="Red and black pool cue with red panther logo"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Sport2 Stratos &mdash; Sport Grip</div><div class="specs"><div class="spec"><b>Year</b><span>2020</span></div><div class="spec"><b>Original Price</b><span>$579</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-sport-stratos-pool-cue-sport-grip-200x2000_1.jpg?v=1764873462" alt="Blue and black pool cue with blue panther logo"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Model SPORT</div><div class="specs"><div class="spec"><b>Year</b><span>2008</span></div><div class="spec"><b>Original Price</b><span>$499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/sport-retired.png?v=1764873462" alt="Glossy black pool cue with orange panther logo"></div></div>
+</section>
+
+<!-- p27 Throne -->
+<section class="panel" id="p27" role="tabpanel">
+  <div class="panel-intro"><h2>Throne Series<span class="yr">2013&ndash;2017</span></h2><p>One of Predator's most ornate named series.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Throne-5</div><div class="specs"><div class="spec"><b>Year</b><span>2013</span></div><div class="spec"><b>Original Price</b><span>$1,499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-throne-5.jpg?v=1764873463" alt="Black and light brown pool cue with diamond accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Throne 2-5</div><div class="specs"><div class="spec"><b>Year</b><span>2017</span></div><div class="spec"><b>Original Price</b><span>$1,499</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-throne2-5.jpg?v=1764873463" alt="Cue stick with black and gold design"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Throne-4</div><div class="specs"><div class="spec"><b>Year</b><span>2013</span></div><div class="spec"><b>Original Price</b><span>$1,399</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-hor-throne-4.jpg?v=1764873462" alt="Black and light brown pool cue with white accents"></div></div>
+</section>
+
+<!-- p28 Valour -->
+<section class="panel" id="p28" role="tabpanel">
+  <div class="panel-intro"><h2>Valour by Jacoby<span class="yr">2023</span></h2><p>A Jacoby collaboration line.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Valour SL 4 by Jacoby</div><div class="specs"><div class="spec"><b>Year</b><span>2023</span></div><div class="spec"><b>Original Price</b><span>$1,509</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-valour-sl-4-pool-cue-by-jacoby-v3-2000x200_1.jpg?v=1764873463" alt="Black and dark brown pool cue with green accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Valour SL 2 by Jacoby</div><div class="specs"><div class="spec"><b>Year</b><span>2023</span></div><div class="spec"><b>Original Price</b><span>$1,249</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-valour-sl-2-pool-cue-by-jacoby-v3-2000x200.jpg?v=1764873463" alt="Black and brown pool cue with turquoise accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Valour SL 1 by Jacoby</div><div class="specs"><div class="spec"><b>Year</b><span>2023</span></div><div class="spec"><b>Original Price</b><span>$1,119</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-predator-valour-sl-1-pool-cue-by-jacoby-v3-2000x200.jpg?v=1764873463" alt="Glossy black and red pool cue with light brown accent"></div></div>
+</section>
+
+<!-- p29 Willie -->
+<section class="panel" id="p29" role="tabpanel">
+  <div class="panel-intro"><h2>Willie Series<span class="yr">2017</span></h2><p>The Willie Hoppe tribute line.</p></div>
+  <div class="cue"><div class="cue-info"><div class="model">Willie-5</div><div class="specs"><div class="spec"><b>Year</b><span>2017</span></div><div class="spec"><b>Original Price</b><span>$1,149</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-willie-5.jpg?v=1764873463" alt="Black and light brown pool cue with white design accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Willie-3</div><div class="specs"><div class="spec"><b>Year</b><span>2017</span></div><div class="spec"><b>Original Price</b><span>$1,119</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-willie-3.jpg?v=1764873463" alt="Black and beige pool cue with white accents"></div></div>
+  <div class="cue"><div class="cue-info"><div class="model">Willie-1</div><div class="specs"><div class="spec"><b>Year</b><span>2017</span></div><div class="spec"><b>Original Price</b><span>$1,049</span></div></div><span class="retired-pill">Retired</span></div><div class="cue-figure"><img src="https://predatorcues.com/cdn/shop/files/retired-willie-1.jpg?v=1764873463" alt="Black and brown retired pool cue"></div></div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('.tab');
+  const panels=document.querySelectorAll('.panel');
+  const scroller=document.getElementById('tabscroll');
+  const arrowL=document.getElementById('arrowL');
+  const arrowR=document.getElementById('arrowR');
+  const thumb=document.getElementById('scrollThumb');
+
+  tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      tabs.forEach(t=>t.setAttribute('aria-selected','false'));
+      panels.forEach(p=>p.classList.remove('active'));
+      tab.setAttribute('aria-selected','true');
+      document.getElementById(tab.dataset.panel).classList.add('active');
+      // keep the active tab in view within the strip
+      tab.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+    tab.addEventListener('keydown',e=>{
+      const arr=[...tabs];const i=arr.indexOf(tab);
+      if(e.key==='ArrowRight'){const n=arr[(i+1)%arr.length];n.focus();n.click();}
+      if(e.key==='ArrowLeft'){const n=arr[(i-1+arr.length)%arr.length];n.focus();n.click();}
+    });
+  });
+
+  // arrow buttons page the strip
+  function page(dir){scroller.scrollBy({left:dir*Math.round(scroller.clientWidth*0.7),behavior:'smooth'});}
+  arrowR.addEventListener('click',()=>page(1));
+  arrowL.addEventListener('click',()=>page(-1));
+
+  // update arrow disabled state + progress thumb on scroll
+  function updateStrip(){
+    const max=scroller.scrollWidth-scroller.clientWidth;
+    const x=scroller.scrollLeft;
+    arrowL.disabled = x<=1;
+    arrowR.disabled = x>=max-1;
+    const ratio=scroller.clientWidth/scroller.scrollWidth;
+    const w=Math.max(ratio*100,8);
+    const left=max>0 ? (x/max)*(100-w) : 0;
+    thumb.style.width=w+'%';
+    thumb.style.left=left+'%';
+  }
+  scroller.addEventListener('scroll',updateStrip,{passive:true});
+  window.addEventListener('resize',updateStrip);
+  updateStrip();
+</script>
+</body>
+</html>
